@@ -26,9 +26,9 @@ async function main() {
       {
         id: 1,
         nama: "Pengurus Yayasan",
-        email: "admin@yayasan.org",
+        email: "admin@yayasan.com",
         password:
-          "$2b$10$D2qg9T8xByhsFnNSoMNV4OyEfKz9mgFBGO5VyALfIVuK9xcLwK56S",
+          "$2b$10$D6oRAxiAIgIGkwX.4esgsuhKDNNXubwEEksY965otro89ecpQmmdW",
         role: "PENGURUS",
         createdAt: new Date("2026-09-14T17:41:21.695Z"),
       },
@@ -37,7 +37,7 @@ async function main() {
         nama: "Budi Santoso",
         email: "budi@gmail.com",
         password:
-          "$2b$10$woCBZIsdiXn7dMIXSkexfeGtc0fHtKgcoYkpwFOuMBBRISKNPOmWu",
+          "$2b$10$D6oRAxiAIgIGkwX.4esgsuhKDNNXubwEEksY965otro89ecpQmmdW",
         role: "DONATUR",
         createdAt: new Date("2026-09-14T17:58:03.266Z"),
       },
@@ -46,7 +46,7 @@ async function main() {
         nama: "Siti Aminah",
         email: "siti@gmail.com",
         password:
-          "$2b$10$R0ruwCcoUFVkvXEH2Vb92.tyX./VuopsXe6Lym8KtyQkZjS/UpAt2",
+          "$2b$10$D6oRAxiAIgIGkwX.4esgsuhKDNNXubwEEksY965otro89ecpQmmdW",
         role: "PENERIMA_BANTUAN",
         createdAt: new Date("2026-09-14T18:04:31.269Z"),
       },
@@ -55,7 +55,7 @@ async function main() {
         nama: "donatur test",
         email: "donatur@gmail.com",
         password:
-          "$2b$10$NwqNM3arAf4m9JE/6f6qOjLcGJDgS/IIWTg7A.G6t5mi7rEAQYJK",
+          "$2b$10$uGRYsB7ph9gWDnRc6/6xPOixDZxSYO9pJJIAG/3P6//AASCJAf3tO",
         role: "DONATUR",
         createdAt: new Date("2026-09-20T18:53:58.336Z"),
       },
@@ -64,7 +64,7 @@ async function main() {
         nama: "pbantuan",
         email: "pbantuan@gmail.com",
         password:
-          "$2b$10$O7fq2JRpqsj1nybAOpao6.VSeW/n1KG1FFpw5INDIB17Y3FDp5Fta",
+          "$2b$10$8Xitc5GoAE/5f36EWDlFH.3W4IqxeyvF7Ewv20hT8XRlFUHr9aPTa",
         role: "PENERIMA_BANTUAN",
         createdAt: new Date("2026-09-20T18:54:57.341Z"),
       },
@@ -73,7 +73,7 @@ async function main() {
         nama: "Yoms",
         email: "Yoms@yayasan.org",
         password:
-          "$2b$10$4dYaBIyZW.xvq.pGsQVtPeZRDXJAjx/agmRT3/r22RQxEtHEACEfa",
+          "$2b$10$D6oRAxiAIgIGkwX.4esgsuhKDNNXubwEEksY965otro89ecpQmmdW",
         role: "PENGURUS",
         createdAt: new Date("2026-09-20T19:13:11.759Z"),
       },
@@ -82,7 +82,7 @@ async function main() {
         nama: "Jamet2@yayasan.org",
         email: "Jamet2@yayasan.org",
         password:
-          "$2b$10$NWrjjj1SDGLHJ7ZmndmNt.zCQMAov2uEBnPY2tBG/nZg5AJwR2PJq",
+          "$2b$10$uGRYsB7ph9gWDnRc6/6xPOixDZxSYO9pJJIAG/3P6//AASCJAf3tO",
         role: "DONATUR",
         createdAt: new Date("2026-09-22T18:34:07.301Z"),
       },
@@ -91,7 +91,7 @@ async function main() {
         nama: "goy",
         email: "goy@yayasan.org",
         password:
-          "$2b$10$OBHQN/oFqvyuxlAMybU6bOre5tMEk4PmZ5jlMbyJ3NJiMIGfXvl2G",
+          "$2b$10$8Xitc5GoAE/5f36EWDlFH.3W4IqxeyvF7Ewv20hT8XRlFUHr9aPTa",
         role: "PENERIMA_BANTUAN",
         createdAt: new Date("2026-09-22T18:34:51.495Z"),
       },
@@ -100,7 +100,7 @@ async function main() {
         nama: "pbantuan1@gmail.com",
         email: "pbantuan1@gmail.com",
         password:
-          "$2b$10$rXd6Ejib.ocxBaz2Qd84reQ64qyVCPAmTfU47R3Li/o95eOjq.E2O",
+          "$2b$10$8Xitc5GoAE/5f36EWDlFH.3W4IqxeyvF7Ewv20hT8XRlFUHr9aPTa",
         role: "PENERIMA_BANTUAN",
         createdAt: new Date("2026-09-23T16:35:48.200Z"),
       },
@@ -523,12 +523,16 @@ async function main() {
   console.log("====================================");
 }
 
-main()
-  .catch((error) => {
-    console.error("❌ Seeding gagal:");
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+module.exports = main;
+
+if (require.main === module) {
+  main()
+    .catch((error) => {
+      console.error("❌ Seeding gagal:");
+      console.error(error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
