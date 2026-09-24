@@ -21,6 +21,12 @@ router.post(
   isAdmin,
   programController.createProgram,
 );
+router.delete(
+  "/program/:id",
+  authenticateToken,
+  isAdmin,
+  programController.deleteProgram,
+);
 
 // --- ROUTES DONASI & PENYALURAN ---
 // Middleware authenticateToken dibuang agar publik/anonim bisa donasi

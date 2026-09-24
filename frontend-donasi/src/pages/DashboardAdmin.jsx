@@ -24,6 +24,7 @@ import {
   LogOut,
   Trash2,
   HeartHandshake,
+  Heart,
   Edit,
   TrendingUp,
   TrendingDown,
@@ -48,6 +49,14 @@ export default function DashboardAdmin() {
     totalMasuk: 0,
     totalKeluar: 0,
     sisaSaldo: 0,
+  });
+
+  // State Modal Tambah Program Donasi
+  const [modalProgramOpen, setModalProgramOpen] = useState(false);
+  const [programForm, setProgramForm] = useState({
+    judul: "",
+    deskripsi: "",
+    targetDana: "",
   });
 
   // State Modal Tambah Pengurus
@@ -244,6 +253,47 @@ export default function DashboardAdmin() {
     }
   };
 
+  const handleTambahProgram = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      await API.post("/program", {
+        judul: programForm.judul,
+        deskripsi: programForm.deskripsi,
+        targetDana: parseFloat(programForm.targetDana),
+      });
+      setSuccess("Program donasi baru berhasil dibuat!");
+      setModalProgramOpen(false);
+      setProgramForm({ judul: "", deskripsi: "", targetDana: "" });
+      fetchProgram();
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Gagal membuat program donasi.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHapusProgram = async (id, judul) => {
+    if (!window.confirm(`Hapus program donasi "${judul}"?`)) return;
+    try {
+      await API.delete(`/program/${id}`);
+      setSuccess(`Program donasi "${judul}" berhasil dihapus.`);
+      fetchProgram();
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Gagal menghapus program.",
+      );
+    }
+  };
+
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!selectedUser) return;
@@ -353,6 +403,23 @@ export default function DashboardAdmin() {
             </button>
 
             <button
+              onClick={() => setActiveMenu("program")}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200 ${
+                activeMenu === "program"
+                  ? "bg-amber-400 text-emerald-950 shadow-md font-extrabold"
+                  : "text-emerald-100/80 hover:bg-emerald-900 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Heart className="w-4 h-4" />
+                <span>Program Donasi</span>
+              </div>
+              <span className="text-[10px] text-emerald-200 bg-emerald-900/80 px-2 py-0.5 rounded-full">
+                {programList.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveMenu("penerima")}
               className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200 ${
                 activeMenu === "penerima"
@@ -436,6 +503,7 @@ export default function DashboardAdmin() {
             <h1 className="text-2xl font-black text-slate-900">
               {activeMenu === "verifikasi" &&
                 "Verifikasi Akun Penerima Bantuan"}
+              {activeMenu === "program" && "Manajemen Program Donasi"}
               {activeMenu === "penerima" && "Daftar Penerima Bantuan"}
               {activeMenu === "donatur" && "Daftar Donatur Terdaftar"}
               {activeMenu === "pengurus" && "Manajemen Pengurus Yayasan"}
@@ -445,6 +513,19 @@ export default function DashboardAdmin() {
               Panel administrasi internal Yayasan Mulia Karya Bersama
             </p>
           </div>
+
+          {activeMenu === "program" && (
+            <button
+              onClick={() => {
+                setError("");
+                setSuccess("");
+                setModalProgramOpen(true);
+              }}
+              className="bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-xs uppercase tracking-wider"
+            >
+              <PlusCircle className="w-4 h-4" /> Tambah Program
+            </button>
+          )}
 
           {activeMenu === "pengurus" && (
             <button
@@ -603,6 +684,104 @@ export default function DashboardAdmin() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* TAB PROGRAM: DAFTAR PROGRAM DONASI */}
+        {activeMenu === "program" && (
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden text-left">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-emerald-700" /> Semua Program Donasi
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Kelola program penggalangan dana dan target bantuan yayasan
+                </p>
+              </div>
+              <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-100">
+                {programList.length} Program
+              </span>
+            </div>
+
+            {programList.length === 0 ? (
+              <div className="text-center py-16 px-4">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+                  <Heart className="w-8 h-8" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-700">
+                  Belum Ada Program Donasi
+                </h4>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  Yayasan belum memiliki program donasi aktif. Klik tombol "+ Tambah Program" di pojok kanan atas untuk membuat program donasi baru.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-100 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                      <th className="py-3 px-6">Judul Program</th>
+                      <th className="py-3 px-6">Target Dana</th>
+                      <th className="py-3 px-6">Terkumpul</th>
+                      <th className="py-3 px-6">Progress</th>
+                      <th className="py-3 px-6 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
+                    {programList.map((prog) => {
+                      const persen = Math.min(
+                        100,
+                        Math.round(
+                          ((prog.terkumpul || 0) / (prog.targetDana || 1)) * 100,
+                        ),
+                      );
+                      return (
+                        <tr
+                          key={prog.id}
+                          className="hover:bg-slate-50/60 transition"
+                        >
+                          <td className="py-4 px-6">
+                            <span className="font-extrabold text-slate-900 block text-xs">
+                              {prog.judul}
+                            </span>
+                            <span className="text-[11px] text-slate-400 line-clamp-1 mt-0.5 max-w-md">
+                              {prog.deskripsi}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 font-bold text-slate-800 whitespace-nowrap">
+                            Rp {(prog.targetDana || 0).toLocaleString("id-ID")}
+                          </td>
+                          <td className="py-4 px-6 font-bold text-emerald-600 whitespace-nowrap">
+                            Rp {(prog.terkumpul || 0).toLocaleString("id-ID")}
+                          </td>
+                          <td className="py-4 px-6 whitespace-nowrap">
+                            <div className="w-28 bg-slate-100 rounded-full h-2 overflow-hidden mb-1">
+                              <div
+                                className="bg-emerald-600 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${persen}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-500">
+                              {persen}% tercapai
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-center whitespace-nowrap">
+                            <button
+                              onClick={() => handleHapusProgram(prog.id, prog.judul)}
+                              className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition"
+                              title="Hapus Program"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -1426,6 +1605,103 @@ export default function DashboardAdmin() {
                   className="w-1/2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-2.5 rounded-xl text-xs transition"
                 >
                   {loading ? "Menyimpan..." : "Simpan Penyaluran"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL TAMBAH PROGRAM DONASI */}
+      {modalProgramOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in duration-200">
+            <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <PlusCircle className="w-5 h-5 text-amber-300" />
+                <div>
+                  <h3 className="font-extrabold text-sm tracking-tight">
+                    Tambah Program Donasi
+                  </h3>
+                  <p className="text-[11px] text-emerald-200/80">
+                    Buat kampanye program donasi yayasan baru
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalProgramOpen(false)}
+                className="text-emerald-300 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleTambahProgram}
+              className="p-6 space-y-4 text-xs font-bold text-slate-700"
+            >
+              <div>
+                <label className="block mb-1.5">Judul Program</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Santunan 100 Anak Yatim Dhuafa"
+                  value={programForm.judul}
+                  onChange={(e) =>
+                    setProgramForm({ ...programForm, judul: e.target.value })
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1.5">Target Dana (Rp)</label>
+                <input
+                  type="number"
+                  required
+                  min="10000"
+                  placeholder="Contoh: 15000000"
+                  value={programForm.targetDana}
+                  onChange={(e) =>
+                    setProgramForm({
+                      ...programForm,
+                      targetDana: e.target.value,
+                    })
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1.5">Deskripsi Lengkap</label>
+                <textarea
+                  rows="3"
+                  required
+                  placeholder="Tuliskan tujuan dan peruntukan donasi ini..."
+                  value={programForm.deskripsi}
+                  onChange={(e) =>
+                    setProgramForm({
+                      ...programForm,
+                      deskripsi: e.target.value,
+                    })
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div className="flex gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setModalProgramOpen(false)}
+                  className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 font-bold transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-1/2 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl font-extrabold shadow-md transition"
+                >
+                  {loading ? "Menyimpan..." : "Simpan Program"}
                 </button>
               </div>
             </form>

@@ -15,6 +15,7 @@ import {
   Image as GalleryIcon,
 } from "lucide-react";
 import logoYayasan from "../assets/logo-yayasan.jpeg";
+import gambarAnak1 from "../assets/gambar-anak-1.jpeg";
 
 export default function Home() {
   const [programs, setPrograms] = useState([]);
@@ -97,7 +98,7 @@ export default function Home() {
     {
       judul: "Bimbingan Tahfidz & Wisuda Santri",
       kategori: "Tahfidz",
-      img: "./src/assets/gambar-anak-1.jpeg",
+      img: gambarAnak1,
     },
     {
       judul: "Pemeriksaan Kesehatan Gratis",

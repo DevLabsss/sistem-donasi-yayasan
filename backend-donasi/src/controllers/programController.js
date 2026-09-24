@@ -36,3 +36,20 @@ exports.createProgram = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Hapus program donasi (Khusus PENGURUS)
+exports.deleteProgram = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const programId = parseInt(id);
+
+    // Hapus relasi donasi dan penyaluran terkait
+    await prisma.donasi.deleteMany({ where: { programId } });
+    await prisma.penyaluranBantuan.deleteMany({ where: { programId } });
+    await prisma.programDonasi.delete({ where: { id: programId } });
+
+    res.json({ message: "Program donasi berhasil dihapus!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
