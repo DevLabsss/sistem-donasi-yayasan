@@ -43,3 +43,7 @@ lerna-debug.log*
 */.claude/
 */.cursor/
 */.devin/
+
+# Subrepos
+backend-donasi/sistem-donasi/
+frontend-donasi/frontend-donasi/
