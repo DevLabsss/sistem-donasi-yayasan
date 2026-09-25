@@ -35,13 +35,19 @@ export default function ModalDonasi({ program, onClose, onSuccess }) {
     setLoading(true);
 
     try {
-      await API.post("/donasi", {
+      const payload = {
         programId: program.id,
         jumlah: parseInt(nominal),
         namaDonatur: namaPengirim || user.nama || "Hamba Allah",
         doa: pesan || "-",
         metodePembayaran: "QRIS",
-      });
+      };
+
+      if (user && user.id) {
+        payload.donaturId = user.id;
+      }
+
+      await API.post("/donasi", payload);
 
       setStep(2);
       if (onSuccess) onSuccess();

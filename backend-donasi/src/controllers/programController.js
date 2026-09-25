@@ -5,7 +5,14 @@ exports.getAllProgram = async (req, res) => {
   try {
     const programs = await prisma.programDonasi.findMany({
       include: {
-        donasi: true,
+        donasi: {
+          include: {
+            donatur: {
+              select: { id: true, nama: true, email: true },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
         penyaluranBantuan: true,
       },
     });

@@ -92,6 +92,12 @@ router.get(
   adminController.getDaftarDonatur,
 );
 router.get(
+  "/admin/donasi",
+  authenticateToken,
+  isAdmin,
+  donasiController.getAllDonasi,
+);
+router.get(
   "/admin/penerima-pending",
   authenticateToken,
   isAdmin,
@@ -130,18 +136,24 @@ router.get(
   donasiController.exportExcel,
 );
 
-// --- ROUTE SINKRONISASI DATA AWAL DATABASE ---
-router.get("/system/seed-database", async (req, res) => {
-  try {
-    const seedFn = require("../../prisma/seed");
-    await seedFn();
-    res.json({
-      success: true,
-      message: "Database berhasil di-reset dan diisi dengan seluruh data & akun awal!",
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// --- ROUTE SINKRONISASI DATA AWAL DATABASE (KHUSUS ADMIN) ---
+router.get(
+  "/system/seed-database",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const seedFn = require("../../prisma/seed");
+      await seedFn();
+      res.json({
+        success: true,
+        message: "Database berhasil di-reset dan diisi dengan seluruh data & akun awal!",
+      });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
+);
 
 module.exports = router;
+
