@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import logoYayasan from "../assets/logo-yayasan.jpeg";
@@ -31,7 +31,6 @@ import {
   Wallet,
   Receipt,
   Search,
-  Filter,
 } from "lucide-react";
 
 export default function DashboardAdmin() {
@@ -104,13 +103,6 @@ export default function DashboardAdmin() {
     password: "",
   });
 
-  useEffect(() => {
-    fetchAllData();
-    fetchProgram();
-    fetchSummaryKeuangan();
-    fetchDaftarDonasi();
-  }, []);
-
   const fetchAllData = () => {
     fetchDaftarPengurus();
     fetchDaftarPenerima();
@@ -180,6 +172,16 @@ export default function DashboardAdmin() {
       )
       .finally(() => setLoadingPending(false));
   };
+
+  // Muat data awal dashboard sekali saat halaman dibuka.
+  useEffect(() => {
+    fetchAllData();
+    fetchProgram();
+    fetchSummaryKeuangan();
+    fetchDaftarDonasi();
+    // Sengaja hanya dijalankan sekali saat halaman dibuka.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -359,7 +361,7 @@ export default function DashboardAdmin() {
       );
       document.body.appendChild(link);
       link.click();
-    } catch (error) {
+    } catch {
       alert("Gagal mengunduh laporan!");
     }
   };

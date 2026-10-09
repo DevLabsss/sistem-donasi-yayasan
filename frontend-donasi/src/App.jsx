@@ -1,4 +1,3 @@
-import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -24,12 +23,18 @@ function MainLayout() {
   const isAdminPage = location.pathname.startsWith("/admin");
 
   return (
-    // 🟢 PERBAIKAN: Ditambahkan 'w-full max-w-full overflow-x-hidden' agar melebar penuh ke seluruh layar
-    <div className="w-full min-h-screen bg-slate-50 flex flex-col justify-between relative overflow-clip">
+    <div className="relative flex min-h-screen w-full flex-col justify-between bg-paper">
+      <a
+        href="#konten"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:font-semibold focus:text-brand-900 focus:shadow"
+      >
+        Lewati ke konten utama
+      </a>
       <div className="w-full flex-1">
         {/* Tampilkan Navbar publik hanya jika BUKAN halaman admin */}
         {!isAdminPage && <Navbar />}
 
+        <main id="konten">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -40,6 +45,7 @@ function MainLayout() {
           <Route path="/admin" element={<DashboardAdmin />} />
           <Route path="/penerima" element={<DashboardPenerima />} />
         </Routes>
+        </main>
       </div>
 
       {/* Tampilkan Footer & Widget WhatsApp hanya jika BUKAN halaman admin */}

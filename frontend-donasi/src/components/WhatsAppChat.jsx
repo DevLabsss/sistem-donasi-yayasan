@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { X, Send } from "lucide-react";
 
 export default function WhatsAppChat() {
@@ -20,7 +20,7 @@ export default function WhatsAppChat() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
+    <div className="fixed bottom-6 right-6 z-30 font-sans">
       {/* Widget Pop-up Chatbot */}
       {isOpen && (
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-80 mb-4 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
@@ -40,14 +40,14 @@ export default function WhatsAppChat() {
               </div>
               <div>
                 <h4 className="font-bold text-sm">Layanan Bantuan</h4>
-                <p className="text-[11px] text-emerald-100 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-400 rounded-full inline-block"></span>{" "}
-                  Online | Yayasan Mulia Karya Bersama
+                <p className="text-xs text-emerald-100">
+                  Yayasan Mulia Karya Bersama
                 </p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
+              aria-label="Tutup chat"
               className="text-white/80 hover:text-white p-1 rounded-lg transition"
             >
               <X className="w-5 h-5" />
@@ -57,7 +57,7 @@ export default function WhatsAppChat() {
           {/* Body Chat / Pesan Otomatis */}
           <div className="p-4 bg-slate-50 space-y-3 text-xs">
             <div className="bg-white p-3 rounded-xl border border-gray-100 text-gray-700 shadow-sm leading-relaxed">
-              Assalamu'alaikum/Halo! 👋
+              Assalamu'alaikum.
               <br />
               <br />
               Ada yang bisa kami bantu terkait program infaq, sedekah, atau
@@ -73,12 +73,14 @@ export default function WhatsAppChat() {
             <input
               type="text"
               placeholder="Tulis pesan Anda..."
-              className="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-600"
+              aria-label="Pesan WhatsApp"
+              className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-600"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
             <button
               type="submit"
+              aria-label="Kirim pesan"
               className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl transition flex items-center justify-center shrink-0"
             >
               <Send className="w-4 h-4" />
@@ -90,8 +92,9 @@ export default function WhatsAppChat() {
       {/* Tombol Floating WhatsApp Button dengan Logo Resmi */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center justify-center border-2 border-white"
-        title="Hubungi Kami via WhatsApp"
+        className="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl transition-transform flex items-center justify-center border-2 border-white"
+        aria-label="Hubungi kami lewat WhatsApp"
+        aria-expanded={isOpen}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

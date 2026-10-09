@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   HandHeart,
   FileText,
@@ -8,18 +8,14 @@ import {
 } from "lucide-react";
 
 export default function DashboardPenerima() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (err) {
-        console.error("Gagal membaca data user:", err);
-      }
+  const [user] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch (err) {
+      console.error("Gagal membaca data user:", err);
+      return null;
     }
-  }, []);
+  });
 
   // Jika belum login / sesi habis, tampilkan peringatan
   if (!user || !user.nama) {

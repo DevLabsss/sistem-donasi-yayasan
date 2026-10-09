@@ -1,274 +1,216 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Heart, LogIn, User, LogOut, Menu, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LogIn, LogOut, Menu, User, X } from "lucide-react";
 import logoYayasan from "../assets/logo-yayasan.jpeg";
+import { galeri } from "../content/yayasan";
+import Button from "./ui/Button";
+
+const MENU = [
+  { id: "beranda", label: "Beranda" },
+  { id: "tentang", label: "Tentang" },
+  { id: "program", label: "Program" },
+  ...(galeri.length > 0 ? [{ id: "galeri", label: "Galeri" }] : []),
+  { id: "donasi", label: "Donasi" },
+];
+
+const bacaUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user") || "{}");
+  } catch {
+    return {};
+  }
+};
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [terbuka, setTerbuka] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = bacaUser();
 
-  // Deteksi efek scroll layar untuk kaca transparan (glassmorphism) & bayangan
+  const tautanRole =
+    user.role === "PENGURUS"
+      ? { to: "/admin", label: "Dashboard Admin" }
+      : user.role === "DONATUR"
+        ? { to: "/donatur", label: "Riwayat Donasi" }
+        : user.role === "PENERIMA_BANTUAN"
+          ? { to: "/penerima", label: "Status Bantuan" }
+          : null;
+
+  // Esc menutup menu mobile
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    if (!terbuka) return;
+    const onKey = (e) => e.key === "Escape" && setTerbuka(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [terbuka]);
 
-  const handleLogout = () => {
+  const keBagian = (e, id) => {
+    e.preventDefault();
+    setTerbuka(false);
+    if (location.pathname === "/") {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      window.history.replaceState(null, "", `/#${id}`);
+    } else {
+      navigate(`/#${id}`);
+    }
+  };
+
+  const keluar = () => {
     localStorage.clear();
     navigate("/login");
   };
 
-  // Handler navigasi smooth scroll yang aktif dari halaman mana saja
-  const handleNavClick = (sectionId) => {
-    setMobileMenuOpen(false);
-
-    if (location.pathname === "/") {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      } else {
-        window.location.hash = sectionId;
-      }
-    } else {
-      navigate(`/#${sectionId}`);
-    }
-  };
+  const linkClass =
+    "rounded-md px-3 py-2 text-sm font-semibold text-ink-muted transition-colors hover:bg-brand-50 hover:text-brand-900";
 
   return (
-    <header className="sticky top-0 z-50 w-full font-sans transition-all duration-300">
-      {/* MAIN NAVBAR DENGAN STICKY GLASSMORPHISM */}
+    <header className="sticky top-0 z-40 border-b border-line bg-white">
       <nav
-        className={`w-full transition-all duration-300 border-b ${
-          scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-md border-slate-200/80 py-3"
-            : "bg-white border-slate-100 py-4"
-        }`}
+        aria-label="Navigasi utama"
+        className="container-page flex h-16 items-center justify-between gap-4"
       >
-        <div className="w-full px-6 md:px-12 flex justify-between items-center">
-          {/* Logo & Nama Yayasan */}
-          <Link to="/" className="flex items-center gap-3 group text-left">
-            <div className="p-1.5 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
-              <img
-                src={logoYayasan}
-                alt="Logo Yayasan Mulia Karya Bersama"
-                className="w-10 h-10 sm:w-11 sm:h-11 object-contain"
-              />
-            </div>
-            <div>
-              <span className="block text-sm font-black text-emerald-900 tracking-tight leading-none group-hover:text-emerald-700 transition">
-                YAYASAN
+        <Link to="/" className="flex min-w-0 items-center gap-3">
+          <img
+            src={logoYayasan}
+            alt=""
+            className="h-10 w-10 shrink-0 rounded-md object-contain"
+          />
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate text-sm font-bold text-brand-900">
+              Yayasan Mulia Karya Bersama
+            </span>
+            <span className="hidden text-xs text-ink-faint sm:block">
+              Kota Tangerang, Banten
+            </span>
+          </span>
+        </Link>
+
+        <ul className="hidden items-center gap-1 lg:flex">
+          {MENU.map((m) => (
+            <li key={m.id}>
+              <a
+                href={`/#${m.id}`}
+                onClick={(e) => keBagian(e, m.id)}
+                className={linkClass}
+              >
+                {m.label}
+              </a>
+            </li>
+          ))}
+          {tautanRole && (
+            <li>
+              <Link to={tautanRole.to} className={linkClass}>
+                {tautanRole.label}
+              </Link>
+            </li>
+          )}
+        </ul>
+
+        <div className="hidden items-center gap-2 lg:flex">
+          {token ? (
+            <>
+              <span className="flex items-center gap-1.5 text-sm font-semibold text-ink-muted">
+                <User className="h-4 w-4" aria-hidden="true" />
+                {user.nama || "Akun"}
               </span>
-              <span className="block text-xs font-black text-amber-600 tracking-wider leading-tight">
-                MULIA KARYA BERSAMA
-              </span>
-            </div>
-          </Link>
-
-          {/* Menu Navigasi Desktop */}
-          <div className="hidden lg:flex items-center gap-7 text-xs font-bold text-slate-700">
-            <button
-              onClick={() => handleNavClick("beranda")}
-              className="hover:text-emerald-700 transition cursor-pointer"
-            >
-              Beranda
-            </button>
-            <button
-              onClick={() => handleNavClick("tentang")}
-              className="hover:text-emerald-700 transition cursor-pointer"
-            >
-              Tentang Kami
-            </button>
-            <button
-              onClick={() => handleNavClick("program")}
-              className="hover:text-emerald-700 transition cursor-pointer"
-            >
-              Program Utama
-            </button>
-            <button
-              onClick={() => handleNavClick("galeri")}
-              className="hover:text-emerald-700 transition cursor-pointer"
-            >
-              Galeri
-            </button>
-            <button
-              onClick={() => handleNavClick("donasi")}
-              className="hover:text-emerald-700 transition cursor-pointer"
-            >
-              Infaq & Sedekah
-            </button>
-
-            {user.role === "PENGURUS" && (
-              <Link
-                to="/admin"
-                className="text-emerald-800 font-extrabold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition"
+              <button
+                type="button"
+                onClick={keluar}
+                aria-label="Keluar dari akun"
+                className="flex h-10 w-10 items-center justify-center rounded-md text-ink-muted hover:bg-red-50 hover:text-red-700"
               >
-                Dashboard Admin
-              </Link>
-            )}
-
-            {user.role === "DONATUR" && (
-              <Link
-                to="/donatur"
-                className="text-emerald-700 hover:text-emerald-900 transition"
-              >
-                Riwayat Donasi
-              </Link>
-            )}
-
-            {user.role === "PENERIMA_BANTUAN" && (
-              <Link
-                to="/penerima"
-                className="text-emerald-700 hover:text-emerald-900 transition"
-              >
-                Status Bantuan
-              </Link>
-            )}
-          </div>
-
-          {/* Tombol Aksi Desktop (Masuk / User Profile / Donasi) */}
-          <div className="hidden sm:flex items-center gap-3">
-            {token ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-extrabold text-emerald-900 bg-emerald-50 border border-emerald-100 px-3 py-2 rounded-xl flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-emerald-700" />
-                  {user.nama || "User"}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
-                  title="Keluar"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold text-emerald-800 hover:bg-emerald-50 active:scale-95 transition-all duration-200"
-              >
-                <LogIn className="w-4 h-4" /> Masuk
-              </Link>
-            )}
-
-            {/* 🟢 SUDAH DIPERBAIKI: Mengarah ke handleNavClick("donasi") */}
-            <button
-              onClick={() => handleNavClick("donasi")}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-amber-500/25 hover:shadow-lg hover:shadow-amber-500/35 active:scale-95 transition-all duration-200 text-xs tracking-wider uppercase ml-1 cursor-pointer"
-            >
-              <Heart className="w-4 h-4 fill-white" /> Donasi
-            </button>
-          </div>
-
-          {/* Tombol Mobile Toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-slate-700 hover:text-emerald-800 rounded-xl"
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </>
+          ) : (
+            <Button as={Link} to="/login" variant="ghost" size="sm" icon={LogIn}>
+              Masuk
+            </Button>
+          )}
+          <Button
+            as="a"
+            href="/#donasi"
+            onClick={(e) => keBagian(e, "donasi")}
+            variant="accent"
+            size="sm"
           >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
+            Donasi sekarang
+          </Button>
         </div>
 
-        {/* Menu Navigasi Mobile Pop-up */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-b border-slate-100 px-6 py-4 space-y-3 text-left animate-in slide-in-from-top duration-200">
-            <button
-              onClick={() => handleNavClick("beranda")}
-              className="block w-full text-left text-xs font-bold text-slate-700 hover:text-emerald-700"
-            >
-              Beranda
-            </button>
-            <button
-              onClick={() => handleNavClick("tentang")}
-              className="block w-full text-left text-xs font-bold text-slate-700 hover:text-emerald-700"
-            >
-              Tentang Kami
-            </button>
-            <button
-              onClick={() => handleNavClick("program")}
-              className="block w-full text-left text-xs font-bold text-slate-700 hover:text-emerald-700"
-            >
-              Program Utama
-            </button>
-            <button
-              onClick={() => handleNavClick("galeri")}
-              className="block w-full text-left text-xs font-bold text-slate-700 hover:text-emerald-700"
-            >
-              Galeri
-            </button>
-            <button
-              onClick={() => handleNavClick("donasi")}
-              className="block w-full text-left text-xs font-bold text-slate-700 hover:text-emerald-700"
-            >
-              Infaq & Sedekah
-            </button>
-
-            {user.role === "PENGURUS" && (
-              <Link
-                to="/admin"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-bold text-emerald-700"
-              >
-                Dashboard Admin
-              </Link>
-            )}
-
-            {user.role === "DONATUR" && (
-              <Link
-                to="/donatur"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-bold text-emerald-700"
-              >
-                Riwayat Donasi
-              </Link>
-            )}
-
-            {user.role === "PENERIMA_BANTUAN" && (
-              <Link
-                to="/penerima"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-xs font-bold text-emerald-700"
-              >
-                Status Bantuan
-              </Link>
-            )}
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-              {token ? (
-                <button
-                  onClick={handleLogout}
-                  className="w-full bg-red-50 text-red-600 font-bold text-xs py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" /> Keluar
-                </button>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full bg-emerald-50 text-emerald-800 font-bold text-xs py-2.5 rounded-xl text-center flex items-center justify-center gap-2"
-                >
-                  <LogIn className="w-4 h-4" /> Masuk Akun
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => setTerbuka((v) => !v)}
+          aria-expanded={terbuka}
+          aria-controls="menu-mobile"
+          aria-label={terbuka ? "Tutup menu" : "Buka menu"}
+          className="flex h-11 w-11 items-center justify-center rounded-md text-ink hover:bg-brand-50 lg:hidden"
+        >
+          {terbuka ? (
+            <X className="h-6 w-6" aria-hidden="true" />
+          ) : (
+            <Menu className="h-6 w-6" aria-hidden="true" />
+          )}
+        </button>
       </nav>
+
+      {terbuka && (
+        <div id="menu-mobile" className="border-t border-line bg-white lg:hidden">
+          <ul className="container-page space-y-1 py-3">
+            {MENU.map((m) => (
+              <li key={m.id}>
+                <a
+                  href={`/#${m.id}`}
+                  onClick={(e) => keBagian(e, m.id)}
+                  className="block rounded-md px-3 py-3 text-base font-semibold text-ink hover:bg-brand-50"
+                >
+                  {m.label}
+                </a>
+              </li>
+            ))}
+            {tautanRole && (
+              <li>
+                <Link
+                  to={tautanRole.to}
+                  onClick={() => setTerbuka(false)}
+                  className="block rounded-md px-3 py-3 text-base font-semibold text-brand-900 hover:bg-brand-50"
+                >
+                  {tautanRole.label}
+                </Link>
+              </li>
+            )}
+            <li className="flex flex-col gap-2 border-t border-line pt-3">
+              <Button
+                as="a"
+                href="/#donasi"
+                onClick={(e) => keBagian(e, "donasi")}
+                variant="accent"
+                size="lg"
+              >
+                Donasi sekarang
+              </Button>
+              {token ? (
+                <Button variant="secondary" size="lg" icon={LogOut} onClick={keluar}>
+                  Keluar ({user.nama || "Akun"})
+                </Button>
+              ) : (
+                <Button
+                  as={Link}
+                  to="/login"
+                  variant="secondary"
+                  size="lg"
+                  icon={LogIn}
+                  onClick={() => setTerbuka(false)}
+                >
+                  Masuk
+                </Button>
+              )}
+            </li>
+          </ul>
+        </div>
+      )}
     </header>
   );
 }

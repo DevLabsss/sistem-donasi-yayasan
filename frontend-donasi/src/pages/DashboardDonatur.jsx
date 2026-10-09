@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../services/api";
 import { Heart, Wallet, Calendar, CheckCircle2, RefreshCw } from "lucide-react";
 
@@ -6,8 +6,22 @@ export default function DashboardDonatur() {
   const [riwayat, setRiwayat] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Muat awal (state loading sudah true sejak render pertama).
   useEffect(() => {
-    fetchRiwayat();
+    let batal = false;
+    API.get("/donasi/saya")
+      .then((res) => {
+        if (!batal) setRiwayat(res.data.data || []);
+      })
+      .catch((err) => {
+        console.error("Gagal mengambil riwayat donasi:", err);
+      })
+      .finally(() => {
+        if (!batal) setLoading(false);
+      });
+    return () => {
+      batal = true;
+    };
   }, []);
 
   const fetchRiwayat = () => {
