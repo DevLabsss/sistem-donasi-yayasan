@@ -80,7 +80,7 @@ sistem-donasi/
 
 ## Requirements
 Sebelum menjalankan aplikasi, pastikan perangkat Anda telah terpasang:
-- **Node.js**: Versi `>= 18.x` atau `>= 20.x` (LTS direkomendasikan)
+- **Node.js**: Versi `>= 20.x` untuk backend dan tooling proyek
 - **npm**: Versi `>= 9.x`
 - **Database**: MySQL Server versi `>= 8.0` atau MariaDB `>= 10.4`
 
@@ -104,6 +104,9 @@ JWT_SECRET="<MASUKKAN_RANDOM_SECRET_KEY_YANG_KUAT>"
 EMAIL_USER="your-email@example.com"
 EMAIL_PASS="your-app-password"
 CLIENT_URL="http://localhost:5173"
+CLOUDINARY_CLOUD_NAME="<CLOUD_NAME>"
+CLOUDINARY_API_KEY="<API_KEY>"
+CLOUDINARY_API_SECRET="<API_SECRET>"
 ```
 
 ### Frontend (`frontend-donasi/.env`)
@@ -232,9 +235,19 @@ Dalam arsitektur *production*, komponen web dipisahkan untuk menjamin keandalan,
 2. **Backend (Node.js Container / PaaS / VPS)**:
    - Platform: Railway, Render, Fly.io, DigitalOcean App Platform, atau VPS Linux (Ubuntu + PM2 + Nginx reverse proxy).
    - Command Start: `npm start`
-   - Environment Variable: `NODE_ENV=production`, `PORT=3000`, `DATABASE_URL=...`, `JWT_SECRET=...`, `CLIENT_URL=https://yourdomain.com`
+   - Environment Variable: `NODE_ENV=production`, `PORT=3000`, `DATABASE_URL=...`, `JWT_SECRET=...`, `CLIENT_URL=https://yourdomain.com`, `CLOUDINARY_CLOUD_NAME=...`, `CLOUDINARY_API_KEY=...`, `CLOUDINARY_API_SECRET=...`
+   - Sebelum mengaktifkan alur donasi baru, terapkan migrasi `20261029000000_add_donation_request_id` pada database yang dikelola Prisma Migrate. Startup `autoMigrate` juga dapat menambah kolom unik nullable tersebut bila migrasi belum dijalankan; periksa riwayat migrasi sebelum menjalankan `migrate deploy` pada database yang sudah tersinkron otomatis.
+   - Fitur pembatalan pengajuan memerlukan migrasi `20261029010000_add_application_canceled_status` agar status `DIBATALKAN` tersedia. Jalankan migrasi sebelum mengaktifkan endpoint pembatalan, atau biarkan `autoMigrate` menyinkronkan enum pada startup. Periksa riwayat migrasi sebelum menjalankan `migrate deploy` jika sinkronisasi otomatis sudah terjadi.
+   - Bukti pembayaran kini hanya tersedia melalui endpoint berautentikasi. Gunakan volume penyimpanan privat yang persisten untuk direktori `uploads/bukti`; jangan publikasikan direktori itu lewat CDN atau reverse proxy.
 
-3. **Database (Managed Cloud Database)**:
+   - Set `VITE_SITE_URL` pada build frontend ke origin HTTPS publik yang sudah diverifikasi untuk menghasilkan canonical URL dan sitemap. Tanpa nilai itu, build hanya menghasilkan `robots.txt`.
+
+3. **Gambar program (Cloudinary)**:
+   - Buat akun Cloudinary dan isi `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, dan `CLOUDINARY_API_SECRET` pada `backend-donasi/.env` untuk lokal serta environment variables layanan backend untuk produksi. Jangan masukkan API secret ke `frontend-donasi/.env` atau variabel `VITE_*`. Tanpa ketiga kredensial ini, unggah gambar mengembalikan HTTP 503; preview lokal tetap dapat tampil.
+   - Field `programdonasi.imageUrl` menyimpan `secure_url`; `programdonasi.imagePublicId` menyimpan `public_id` untuk menghapus gambar. Keduanya nullable. Migrasi `20261027000000_add_program_image` dan `20261027010000_add_program_image_public_id` tidak menghapus program lama; `autoMigrate` menambah kolom secara idempoten. Untuk database yang dikelola Prisma Migrate, jalankan `npx prisma migrate deploy` setelah mencadangkan database dan memeriksa riwayat migrasinya.
+   - Endpoint admin menerima JPG, PNG, dan WebP maksimal 5 MB, memvalidasi isi, lalu mengunggah WebP teroptimasi dengan ID unik. Gambar Cloudinary lama dibersihkan setelah pembaruan database berhasil. Jika pembersihan gagal, respons API menandai `cleanupPending`. URL Vercel Blob lama tetap ditampilkan, tetapi tidak bisa dihapus dari store lama tanpa token store tersebut.
+
+4. **Database (Managed Cloud Database)**:
    - Platform: AWS RDS MySQL, DigitalOcean Managed Database, PlanetScale, atau Aiven.
    - *Peringatan*: Jangan menggunakan lingkungan lokal/XAMPP untuk basis data produksi. Pastikan basis data produksi dikonfigurasi dengan SSL connection, pencadangan otomatis (automated backup), serta kredensial yang kuat.
 

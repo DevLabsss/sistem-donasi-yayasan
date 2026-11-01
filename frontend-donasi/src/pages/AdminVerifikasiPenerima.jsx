@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { CheckCircle, XCircle, Clock, UserCheck } from "lucide-react";
 
@@ -26,8 +26,19 @@ export default function AdminVerifikasiPenerima() {
   };
 
   useEffect(() => {
-    fetchPendingUsers();
-  }, []);
+    let active = true;
+    const token = localStorage.getItem("token");
+    axios.get(`${API_URL}/admin/penerima-pending`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((res) => {
+      if (active) setListPending(res.data.data || []);
+    }).catch((err) => {
+      console.error("Gagal mengambil antrean verifikasi:", err);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
+  }, [API_URL]);
 
   // Handler untuk Setuju (DISETUJUI) atau Tolak (DITOLAK)
   const handleVerifikasi = async (id, status) => {

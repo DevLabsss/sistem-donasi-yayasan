@@ -1,29 +1,54 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import { foundation } from "../data/foundation";
 import { X, Send } from "lucide-react";
 
 export default function WhatsAppChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [footerVisible, setFooterVisible] = useState(false);
 
-  // 🟢 Ganti nomor di bawah ini dengan nomor WhatsApp resmi Yayasan (format: 62...)
-  const noHp = "6289637953766";
+  useEffect(() => {
+    const footer = document.getElementById("kontak");
+    if (!footer || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      setFooterVisible(entry.isIntersecting);
+    }, { rootMargin: "0px 0px -72px 0px" });
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
+
+  // Nomor WhatsApp resmi Yayasan, dengan kode negara dan tanpa tanda +.
+  const noHp = foundation.whatsapp;
 
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
-    const encodedText = encodeURIComponent(message);
-    const waUrl = `https://wa.me/${noHp}?text=${encodedText}`;
-    window.open(waUrl, "_blank");
+    const phoneNumber = noHp.replace(/\D/g, "");
+    if (!phoneNumber) return;
+
+    const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message.trim())}`;
+    const whatsappWindow = window.open(waUrl, "_blank");
+
+    // Keep the draft if the browser blocks the new tab so the user can retry.
+    if (!whatsappWindow) return;
+    whatsappWindow.opener = null;
+
     setMessage("");
     setIsOpen(false);
   };
+
+  if (footerVisible && !isOpen) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 font-sans">
       {/* Widget Pop-up Chatbot */}
       {isOpen && (
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-80 mb-4 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div
+          className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-[min(20rem,calc(100vw-2rem))] mb-4 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300"
+          role="dialog"
+          aria-label="Layanan bantuan WhatsApp"
+        >
           {/* Header Chat */}
           <div className="bg-emerald-700 text-white p-4 flex justify-between items-center">
             <div className="flex items-center space-x-3">
@@ -47,8 +72,10 @@ export default function WhatsAppChat() {
               </div>
             </div>
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
               className="text-white/80 hover:text-white p-1 rounded-lg transition"
+              aria-label="Tutup layanan bantuan"
             >
               <X className="w-5 h-5" />
             </button>
@@ -72,6 +99,7 @@ export default function WhatsAppChat() {
           >
             <input
               type="text"
+              aria-label="Pesan WhatsApp"
               placeholder="Tulis pesan Anda..."
               className="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-600"
               value={message}
@@ -79,7 +107,9 @@ export default function WhatsAppChat() {
             />
             <button
               type="submit"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-xl transition flex items-center justify-center shrink-0"
+              aria-label="Kirim pesan melalui WhatsApp"
+              disabled={!message.trim()}
+              className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-2 rounded-xl transition flex items-center justify-center shrink-0"
             >
               <Send className="w-4 h-4" />
             </button>
@@ -89,9 +119,16 @@ export default function WhatsAppChat() {
 
       {/* Tombol Floating WhatsApp Button dengan Logo Resmi */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl transition-transform hover:scale-110 flex items-center justify-center border-2 border-white"
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        className="bg-emerald-700 hover:bg-emerald-800 text-white w-14 h-14 rounded-full shadow-xl transition-transform hover:scale-105 flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
         title="Hubungi Kami via WhatsApp"
+        aria-label={
+          isOpen
+            ? "Tutup layanan bantuan WhatsApp"
+            : "Buka layanan bantuan WhatsApp"
+        }
+        aria-expanded={isOpen}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
