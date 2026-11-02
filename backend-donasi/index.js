@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+require("./src/configureDatabaseTls")();
 
 const apiRoutes = require("./src/routes/api");
 
@@ -207,8 +208,12 @@ async function start() {
   });
 }
 
-start().catch(async (error) => {
-  console.error("Server tidak dapat dimulai:", error);
-  await require("./src/db").$disconnect();
-  process.exitCode = 1;
-});
+if (process.env.VERCEL !== "1") {
+  start().catch(async (error) => {
+    console.error("Server tidak dapat dimulai:", error);
+    await require("./src/db").$disconnect();
+    process.exitCode = 1;
+  });
+}
+
+module.exports = app;
