@@ -16,6 +16,9 @@ import {
 import qrisImage from "../assets/qris-yayasan.jpeg";
 import { compressImage } from "../utils/imageCompressor";
 
+const demoMode = import.meta.env.VITE_DEMO_MODE === "true" ||
+  (import.meta.env.PROD && import.meta.env.VITE_DEMO_MODE !== "false");
+
 export default function ModalDonasi({
   program,
   onClose,
@@ -92,6 +95,7 @@ export default function ModalDonasi({
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
+    if (demoMode) return;
     if (submitLock.current || donasiTercatat) return;
     setError("");
 
@@ -174,6 +178,11 @@ export default function ModalDonasi({
         {/* STEP 1: FORM INPUT NOMINAL */}
         {step === 1 && (
           <form onSubmit={handleSubmitForm} noValidate className="p-5 space-y-4">
+            {demoMode && (
+              <p role="status" className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs font-semibold text-amber-900">
+                Situs ini sedang dalam mode demo. Donasi dan pembayaran belum dibuka.
+              </p>
+            )}
             {error && (
               <div id="donation-amount-error" role="alert" className="bg-red-50 text-red-600 text-xs p-3 rounded-2xl border border-red-100 font-medium flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" /> {error}
@@ -251,10 +260,12 @@ export default function ModalDonasi({
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || demoMode}
               className="w-full bg-emerald-800 hover:bg-emerald-900 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold py-3 rounded-2xl shadow-lg shadow-emerald-800/20 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider mt-2 cursor-pointer"
             >
-              {loading ? (
+              {demoMode ? (
+                "Donasi belum dibuka"
+              ) : loading ? (
                 "Memproses..."
               ) : (
                 <>

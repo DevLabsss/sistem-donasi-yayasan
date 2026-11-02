@@ -6,12 +6,19 @@ const apiRoutes = require("./src/routes/api");
 
 const app = express();
 
+let configuredClientOrigin;
+try {
+  configuredClientOrigin = new URL(process.env.CLIENT_URL).origin;
+} catch {
+  configuredClientOrigin = null;
+}
+
 const allowedOrigins = [
   "https://yayasanmuliakaryabersama.netlify.app",
-  "https://sistem-donasi-frontend-production.up.railway.app",
   "http://localhost:5173",
   "http://localhost:3000",
   "http://localhost:5174",
+  configuredClientOrigin,
 ];
 
 app.use(
@@ -25,9 +32,6 @@ app.use(
       // Izinkan origin yang sudah terdaftar
       if (
         allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app") ||
-        origin.endsWith(".netlify.app") ||
-        origin.endsWith(".up.railway.app") ||
         origin.startsWith("http://localhost:")
       ) {
         return callback(null, true);

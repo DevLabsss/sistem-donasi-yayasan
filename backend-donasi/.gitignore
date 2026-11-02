@@ -14,11 +14,10 @@ logs/
 *.log
 npm-debug.log*
 
-# AI / IDE assistant directories
+# Local editor and tool settings
+.vscode/
+.idea/
 .agents/
 .claude/
 .cursor/
 .devin/
-.vscode/
-.idea/
-sistem-donasi/node_modules/

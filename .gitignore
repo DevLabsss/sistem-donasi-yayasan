@@ -47,3 +47,10 @@ lerna-debug.log*
 # Subrepos
 backend-donasi/sistem-donasi/
 frontend-donasi/frontend-donasi/
+
+# Local deployment artifacts and uploaded private files
+backend-donasi/backup_*.sql
+backend-donasi/prisma/*.tmp
+backend-donasi/prisma/*.backup.js
+backend-donasi/uploads/
+backend-siap-upload/

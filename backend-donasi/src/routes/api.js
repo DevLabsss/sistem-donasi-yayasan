@@ -7,6 +7,12 @@ const donasiController = require("../controllers/donasiController");
 const adminController = require("../controllers/adminController");
 const { authenticateToken, isAdmin } = require("../middleware/authMiddleware");
 const programImageUpload = require("../middleware/programImageUpload");
+const blockDemoDonations = (_req, res, next) => {
+  if (process.env.DEMO_MODE === "true") {
+    return res.status(503).json({ message: "Donasi belum dibuka pada situs demo." });
+  }
+  next();
+};
 
 // --- ROUTES AUTENTIKASI ---
 router.post("/auth/register", authController.register);
@@ -28,7 +34,7 @@ router.put("/program/:id", authenticateToken, isAdmin, programImageUpload, progr
 router.delete("/program/:id", authenticateToken, isAdmin, programController.deleteProgram);
 
 // --- ROUTES DONASI ---
-router.post("/donasi", donasiController.createDonasi);
+router.post("/donasi", blockDemoDonations, donasiController.createDonasi);
 router.put("/donasi/:id/bukti", donasiController.uploadBuktiDonasi);
 router.get("/donasi/:id/bukti", authenticateToken, donasiController.getBuktiDonasi);
 router.delete("/donasi/:id/bukti", authenticateToken, isAdmin, donasiController.deleteBuktiDonasi);

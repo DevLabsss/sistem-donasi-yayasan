@@ -1,11 +1,24 @@
 const prisma = require("../db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("node:crypto");
+const nodemailer = require("nodemailer");
+const resetPasswordEmail = require("../utils/resetPasswordEmail");
+
+const passwordFingerprint = (passwordHash) =>
+  crypto.createHash("sha256").update(passwordHash).digest("hex");
 
 // 1. REGISTRASI
 exports.register = async (req, res) => {
   try {
     const { nama, email, password, role, alamat, noHp, alasan } = req.body;
+
+    if (!["DONATUR", "PENERIMA_BANTUAN"].includes(role || "DONATUR")) {
+      return res.status(400).json({ message: "Peran pendaftaran tidak valid." });
+    }
+    if (typeof nama !== "string" || !nama.trim() || typeof email !== "string" || !email.trim() || typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({ message: "Nama, email, dan password minimal 6 karakter wajib diisi." });
+    }
 
     // Cek apakah email sudah pernah terdaftar
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -158,17 +171,9 @@ exports.login = async (req, res) => {
 // 3. LUPA PASSWORD
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
-
+    const email = typeof req.body?.email === "string" ? req.body.email.trim() : "";
     if (!email) {
       return res.status(400).json({ message: "Alamat email wajib diisi." });
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ message: "Alamat email tidak terdaftar di sistem kami." });
     }
 
     const secretKey = process.env.JWT_SECRET;
@@ -176,28 +181,37 @@ exports.forgotPassword = async (req, res) => {
       return res.status(500).json({ message: "Konfigurasi server bermasalah: JWT_SECRET belum diatur." });
     }
 
-    const resetToken = jwt.sign({ id: user.id, email: user.email }, secretKey, {
-      expiresIn: "15m",
-    });
+    const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, CLIENT_URL } = process.env;
+    const smtpPort = Number(SMTP_PORT);
+    if (!SMTP_HOST || !Number.isInteger(smtpPort) || smtpPort <= 0 || !SMTP_USER || !SMTP_PASS || !SMTP_FROM || !CLIENT_URL) {
+      return res.status(503).json({ message: "Pemulihan password belum tersedia. Hubungi pengurus yayasan." });
+    }
 
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      const resetToken = jwt.sign(
+        { id: user.id, purpose: "password-reset", passwordFingerprint: passwordFingerprint(user.password) },
+        secretKey,
+        { expiresIn: "15m" },
+      );
+      const resetUrl = new URL(`/reset-password/${resetToken}`, CLIENT_URL).toString();
+      const transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+      });
+      await transporter.sendMail({
+        from: SMTP_FROM,
+        to: user.email,
+        ...resetPasswordEmail(resetUrl),
+      });
+    }
 
-    console.log("==========================================");
-    console.log(`[PEMULIHAN PASSWORD] User: ${user.nama} (${user.email})`);
-    console.log(`[LINK RESET]: ${resetUrl}`);
-    console.log("==========================================");
-
-    res.json({
-      message: "Tautan pemulihan password berhasil dibuat!",
-      resetUrl,
-    });
+    return res.json({ message: "Jika email terdaftar, tautan pemulihan akan dikirim ke alamat tersebut." });
   } catch (error) {
     console.error("Error Forgot Password:", error);
-    res.status(500).json({
-      message: "Gagal memproses permintaan reset password.",
-      error: error.message,
-    });
+    return res.status(503).json({ message: "Pemulihan password sementara tidak tersedia." });
   }
 };
 
@@ -226,17 +240,28 @@ exports.resetPasswordWithToken = async (req, res) => {
     let decoded;
     try {
       decoded = jwt.verify(token, secretKey);
+      if (decoded.purpose !== "password-reset" || !Number.isSafeInteger(decoded.id) || !decoded.passwordFingerprint) {
+        throw new Error("Token bukan untuk reset password.");
+      }
     } catch (err) {
       return res.status(400).json({
         message: "Tautan reset password tidak valid atau telah kadaluwarsa.",
       });
     }
 
+    const user = await prisma.user.findUnique({ where: { id: decoded.id }, select: { password: true } });
+    if (!user || passwordFingerprint(user.password) !== decoded.passwordFingerprint) {
+      return res.status(400).json({ message: "Tautan reset password tidak valid atau telah digunakan." });
+    }
+
     const hashedPassword = await bcrypt.hash(passwordBaru, 10);
-    await prisma.user.update({
-      where: { id: decoded.id },
+    const updated = await prisma.user.updateMany({
+      where: { id: decoded.id, password: user.password },
       data: { password: hashedPassword },
     });
+    if (!updated.count) {
+      return res.status(400).json({ message: "Tautan reset password tidak valid atau telah digunakan." });
+    }
 
     res.json({
       message: "Password Anda berhasil diperbarui! Silakan login kembali.",

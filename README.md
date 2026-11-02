@@ -100,10 +100,14 @@ PORT=3000
 DATABASE_URL="mysql://<DB_USER>:<DB_PASSWORD>@<DB_HOST>:<DB_PORT>/<DB_NAME>"
 JWT_SECRET="<MASUKKAN_RANDOM_SECRET_KEY_YANG_KUAT>"
 
-# Konfigurasi Pengiriman Email Reset Password (Gmail SMTP)
-EMAIL_USER="your-email@example.com"
-EMAIL_PASS="your-app-password"
 CLIENT_URL="http://localhost:5173"
+
+# Pengiriman email pemulihan kata sandi (SMTP)
+SMTP_HOST="smtp.example.com"
+SMTP_PORT="587"
+SMTP_USER="your-email@example.com"
+SMTP_PASS="your-smtp-password"
+SMTP_FROM="Yayasan <your-email@example.com>"
 CLOUDINARY_CLOUD_NAME="<CLOUD_NAME>"
 CLOUDINARY_API_KEY="<API_KEY>"
 CLOUDINARY_API_SECRET="<API_SECRET>"
@@ -233,7 +237,7 @@ Dalam arsitektur *production*, komponen web dipisahkan untuk menjamin keandalan,
    - Environment Variable: `VITE_API_URL=https://api.yourdomain.com/api`
 
 2. **Backend (Node.js Container / PaaS / VPS)**:
-   - Platform: Railway, Render, Fly.io, DigitalOcean App Platform, atau VPS Linux (Ubuntu + PM2 + Nginx reverse proxy).
+   - Platform yang dipakai proyek ini: Render untuk backend dan Netlify untuk frontend.
    - Command Start: `npm start`
    - Environment Variable: `NODE_ENV=production`, `PORT=3000`, `DATABASE_URL=...`, `JWT_SECRET=...`, `CLIENT_URL=https://yourdomain.com`, `CLOUDINARY_CLOUD_NAME=...`, `CLOUDINARY_API_KEY=...`, `CLOUDINARY_API_SECRET=...`
    - Sebelum mengaktifkan alur donasi baru, terapkan migrasi `20261029000000_add_donation_request_id` pada database yang dikelola Prisma Migrate. Startup `autoMigrate` juga dapat menambah kolom unik nullable tersebut bila migrasi belum dijalankan; periksa riwayat migrasi sebelum menjalankan `migrate deploy` pada database yang sudah tersinkron otomatis.

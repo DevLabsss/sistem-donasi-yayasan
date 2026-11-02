@@ -8,30 +8,19 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [resetLink, setResetLink] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
-    setResetLink("");
     setLoading(true);
 
     try {
       const res = await API.post("/auth/forgot-password", { email });
       setMessage(
-        res.data.message || "Tautan pemulihan password berhasil dibuat.",
+        res.data.message || "Jika email terdaftar, tautan pemulihan akan dikirim.",
       );
-
-      if (res.data.resetUrl) {
-        setResetLink(res.data.resetUrl);
-
-        // Otomatis mengarahkan ke halaman reset password dalam 1.5 detik
-        setTimeout(() => {
-          window.location.href = res.data.resetUrl;
-        }, 1500);
-      }
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -47,7 +36,6 @@ export default function ForgotPassword() {
       <form onSubmit={handleSubmit} className="ds-form" aria-busy={loading}>
         <Notice type="error" message={error} />
         <Notice message={message} />
-        {resetLink && <p className="ds-help">Anda akan diarahkan ke halaman pemulihan. <a href={resetLink} className="ds-text-link">Buka tautan</a></p>}
         <div className="ds-field"><label htmlFor="forgot-email">Alamat email terdaftar</label><input id="forgot-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contoh@email.com" required /></div>
         <button type="submit" disabled={loading} className="ds-button ds-button-primary">{loading ? "Memproses…" : "Kirim tautan pemulihan"}</button>
         <p className="ds-form-footer"><Link to="/login">Kembali ke halaman masuk</Link></p>
