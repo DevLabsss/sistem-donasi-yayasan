@@ -44,14 +44,13 @@ Untuk deploy, `CLIENT_URL` harus berisi alamat HTTPS frontend yang benar agar ta
 
 ## Menjalankan aplikasi
 
-Terapkan migrasi database, lalu jalankan server:
+Jalankan server pengembangan:
 
 ```bash
-npx prisma migrate deploy
 npm run dev
 ```
 
-Untuk menjalankan tanpa `nodemon`, gunakan `npm start`. Server berjalan pada `http://localhost:3000` jika `PORT` tidak diubah. Ketika server dimulai, aplikasi juga memeriksa dan menyinkronkan beberapa tabel serta kolom yang diperlukan.
+Untuk menjalankan tanpa `nodemon`, gunakan `npm start`. Server berjalan pada `http://localhost:3000` jika `PORT` tidak diubah. Ketika server dimulai, aplikasi juga memeriksa dan menyinkronkan beberapa tabel serta kolom yang diperlukan. Jalankan migrasi Prisma hanya setelah riwayat migrasi database tujuan diperiksa, seperti dijelaskan pada bagian Railway di bawah.
 
 Jika muncul `nodemon: command not found`, jalankan `npm ci` dari folder ini untuk memasang dependensi pengembangan. Jika muncul pesan Prisma Client belum dibuat, jalankan `npx prisma generate`. Jika muncul `Can't reach database server`, periksa apakah MySQL sudah menyala dan `DATABASE_URL` benar.
 
@@ -64,26 +63,23 @@ GET http://localhost:3000/api/health/db
 
 Endpoint kedua memeriksa koneksi database.
 
-## Deploy untuk demonstrasi
+## Persiapan deploy Railway
 
-Urutan yang memudahkan pengaturan URL adalah **database MySQL online → backend Render → perbarui `VITE_API_URL` frontend Netlify**. Gunakan database kosong dan data contoh untuk demonstrasi. Jangan pakai `DATABASE_URL` lokal dari `.env` pada Render.
+1. Hubungkan repository ke Railway dan atur **Root Directory** layanan backend menjadi `/backend-donasi`. Gunakan `npm start` sebagai **Start Command** dan `/api/health/db` sebagai **Healthcheck Path**. Server sudah mendengarkan `PORT` yang diberikan Railway pada `0.0.0.0`.
+2. Tambahkan layanan **MySQL** ke proyek Railway. Di layanan backend, atur variabel berikut. Jangan salin file `.env` lokal ke repository.
 
-Repo root memiliki `render.yaml` untuk membuat Web Service Render Free dengan root `backend-donasi`. Blueprint meminta `DATABASE_URL` MySQL online di dashboard Render; `JWT_SECRET` dibuat otomatis. Kredensial Cloudinary dapat ditambahkan kemudian jika unggah gambar program diperlukan. `CLIENT_URL` sudah diarahkan ke situs Netlify proyek ini. Build menjalankan `npm ci`, lalu start menjalankan `prisma migrate deploy` sebelum API dibuka. Pilih database MySQL online yang mendukung koneksi dari Render, misalnya [Aiven for MySQL Free](https://aiven.io/docs/products/mysql/concepts/mysql-free-tier), dan simpan URL koneksinya hanya sebagai environment variable Render.
+   | Variabel | Nilai |
+   | --- | --- |
+   | `DATABASE_URL` | Referensi `${{MySQL.MYSQL_URL}}` ke layanan MySQL Railway; ganti `MySQL` jika nama layanannya berbeda. |
+   | `JWT_SECRET` | Kunci acak panjang dan rahasia. |
+   | `CLIENT_URL` | Origin HTTPS frontend, tanpa path. |
+   | `DEMO_MODE` | `true` selama donasi belum siap dibuka. |
+   | `UPLOADS_DIR` | `/data/uploads` bila volume di bawah dipasang. |
 
-Setelah endpoint `https://<nama-layanan>.onrender.com/api/health/db` berhasil, atur `VITE_API_URL=https://<nama-layanan>.onrender.com/api` dan `VITE_DEMO_MODE=true` pada environment variable Netlify, lalu deploy ulang frontend. Blueprint menetapkan `DEMO_MODE=true` pada API untuk menolak pembuatan donasi. Versi ini hanya untuk demo: bukti pembayaran dan avatar masih disimpan pada disk sementara Render Free dan dapat hilang setelah layanan tidur atau deploy ulang. Jangan menerima donasi sungguhan sampai unggahan dipindahkan ke penyimpanan permanen dan alurnya diuji.
-
-Jika membuat layanan Render secara manual, pilih root directory `backend-donasi`, lalu gunakan:
-
-```text
-Build command: npm ci
-Start command: npx prisma migrate deploy && npm start
-```
-
-Atur `DATABASE_URL`, `JWT_SECRET` yang panjang dan acak, serta `CLIENT_URL` sebagai environment variable di layanan backend. `PORT` biasanya disediakan oleh platform. Jika gambar program digunakan, isi variabel Cloudinary juga. Jangan unggah `.env` ke repository.
-
-Frontend perlu `VITE_API_URL` dengan format `https://alamat-backend/api`. Jika alamat frontend berubah dari Netlify yang sekarang, isi `CLIENT_URL` backend dengan **origin** frontend baru tanpa path tambahan, lalu deploy ulang backend.
-
-Backend menyimpan **bukti pembayaran** di `uploads/bukti/` dan **avatar** di `uploads/avatars/`. File ini perlu penyimpanan permanen sebelum menerima data nyata. Pada Render Free, isi disk lokal dapat hilang saat layanan berhenti atau deploy ulang. Render Free juga memblokir port SMTP umum `25`, `465`, dan `587`; fitur lupa password lewat email tidak akan berfungsi di sana tanpa mengganti metode pengiriman email. Lihat [batasan Render Free](https://render.com/docs/free). Jangan gunakan seed atau data donasi sungguhan untuk demonstrasi di layanan tersebut.
+   Tambahkan `SMTP_*` dan `CLOUDINARY_*` sesuai fitur yang digunakan. Gunakan `MYSQL_URL` internal dari layanan database Railway untuk backend, bukan URL publik atau `DATABASE_URL` lokal.
+3. Buat **volume** Railway untuk layanan backend, pasang di `/data/uploads`, dan set `UPLOADS_DIR=/data/uploads`. Bukti pembayaran disimpan di subfolder `bukti` dan hanya disajikan melalui API berizin; avatar berada di `avatars`. Volume ini diperlukan agar file tetap ada setelah deploy ulang. File unggahan lokal yang sudah ada tidak berpindah otomatis ke volume.
+4. Biarkan **Pre-deploy Command** kosong untuk persiapan awal. Proyek ini saat ini menyinkronkan skema lewat `autoMigrate()` pada startup. Riwayat migrasi Prisma lama memakai nama tabel `User`/`Donasi`, sedangkan skema aktif memakai `user`/`donasi`. Jika database Railway sudah berisi tabel atau data, periksa riwayat migrasinya sebelum menjalankan `prisma migrate deploy`; jangan jalankan seed contoh pada database yayasan.
+5. Setelah backend sehat di `/api/health/db`, atur `VITE_API_URL=https://alamat-backend/api` pada frontend dan build ulang. Selama pengujian, set juga `VITE_DEMO_MODE=true` pada frontend. Uji login, unggah avatar, dan akses bukti pembayaran sebelum membuka donasi.
 
 ## Fitur API
 

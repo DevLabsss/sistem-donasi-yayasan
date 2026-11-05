@@ -74,13 +74,13 @@ npm run lint     # Periksa aturan ESLint
 
 Frontend dapat di-deploy sebagai situs statis. Untuk repo tim ini, gunakan folder `frontend-donasi/` sebagai aplikasi yang di-deploy.
 
-- **Vercel Root Directory:** `frontend-donasi`
+- **Root Directory:** `frontend-donasi`
 - **Framework Preset:** Vite
 - **Build command:** `npm run build`
 - **Publish/output directory:** `dist`
 - **Environment variable:** isi `VITE_API_URL` dengan alamat HTTPS backend yang dapat diakses publik, termasuk `/api`.
 
-Konfigurasi route aplikasi Vercel sudah tersedia di `vercel.json` dalam folder ini. Setelah mengubah `VITE_API_URL`, deploy ulang frontend agar alamat API baru masuk ke hasil build.
+Setelah mengubah `VITE_API_URL`, deploy ulang frontend agar alamat API baru masuk ke hasil build.
 
 Untuk **Netlify**, file `public/_redirects` sudah disediakan agar halaman seperti `/login` tetap terbuka saat di-refresh:
 
@@ -88,7 +88,7 @@ Untuk **Netlify**, file `public/_redirects` sudah disediakan agar halaman sepert
 /*  /index.html  200
 ```
 
-Repo ini juga memiliki salinan aplikasi di root. Gunakan pengaturan **Root Directory** di atas agar hanya satu salinan yang dipakai saat deploy.
+Gunakan pengaturan **Root Directory** di atas saat deploy.
 
 ## Catatan penggunaan
 

@@ -237,7 +237,7 @@ Dalam arsitektur *production*, komponen web dipisahkan untuk menjamin keandalan,
    - Environment Variable: `VITE_API_URL=https://api.yourdomain.com/api`
 
 2. **Backend (Node.js Container / PaaS / VPS)**:
-   - Platform yang dipakai proyek ini: Render untuk backend dan Netlify untuk frontend.
+   - Rencana platform proyek ini: Railway untuk backend dan Netlify untuk frontend.
    - Command Start: `npm start`
    - Environment Variable: `NODE_ENV=production`, `PORT=3000`, `DATABASE_URL=...`, `JWT_SECRET=...`, `CLIENT_URL=https://yourdomain.com`, `CLOUDINARY_CLOUD_NAME=...`, `CLOUDINARY_API_KEY=...`, `CLOUDINARY_API_SECRET=...`
    - Sebelum mengaktifkan alur donasi baru, terapkan migrasi `20261029000000_add_donation_request_id` pada database yang dikelola Prisma Migrate. Startup `autoMigrate` juga dapat menambah kolom unik nullable tersebut bila migrasi belum dijalankan; periksa riwayat migrasi sebelum menjalankan `migrate deploy` pada database yang sudah tersinkron otomatis.
@@ -252,7 +252,7 @@ Dalam arsitektur *production*, komponen web dipisahkan untuk menjamin keandalan,
    - Endpoint admin menerima JPG, PNG, dan WebP maksimal 5 MB, memvalidasi isi, lalu mengunggah WebP teroptimasi dengan ID unik. Gambar Cloudinary lama dibersihkan setelah pembaruan database berhasil. Jika pembersihan gagal, respons API menandai `cleanupPending`. URL Vercel Blob lama tetap ditampilkan, tetapi tidak bisa dihapus dari store lama tanpa token store tersebut.
 
 4. **Database (Managed Cloud Database)**:
-   - Platform: AWS RDS MySQL, DigitalOcean Managed Database, PlanetScale, atau Aiven.
+   - Platform yang direncanakan: Railway MySQL.
    - *Peringatan*: Jangan menggunakan lingkungan lokal/XAMPP untuk basis data produksi. Pastikan basis data produksi dikonfigurasi dengan SSL connection, pencadangan otomatis (automated backup), serta kredensial yang kuat.
 
 ---
